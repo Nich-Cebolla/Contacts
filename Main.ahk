@@ -68,7 +68,7 @@ class Main {
         Btn.Edit := Edits[-1]
         Btn := G.Add('Button', 'ys Section vBtnOpenOutputDir', 'Open Output Dir')
         Btn.OnEvent('Click', HClickButtonOpenOutput)
-        Btns.Edit := Edits[-1]
+        Btn.Edit := Edits[-1]
         G.Add('Text', 'ys vTxtStatus', 'Status: Processing')
         G['TxtStatus'].Text := 'Status: Idle'
         Align.CenterV(G['TxtStatus'], G['BtnRun'])
@@ -104,11 +104,11 @@ class Main {
                 Ctrl.Gui.Add('Text', Format('x{} y{} w50 vTxtDots', cx + cw, cy), '.')
                 flag_addtext := false
             }
-            ; dots := 0
-            ; SetTimer(_Dots, 500)
+            dots := 0
+            SetTimer(_Dots, 500)
             result := this.Run()
             flag_dots := false
-            ; SetTimer(_Dots, 0)
+            SetTimer(_Dots, 0)
             Ctrl.Gui['TxtDots'].Text := ''
             if result {
                 Ctrl.Gui['TxtStatus'].Text := 'Status: Error'
@@ -139,7 +139,17 @@ class Main {
             if !Result {
                 return
             }
-            Ctrl.Edit.Text := Result
+            if DirExist(Result) {
+                LastMonth := ContactsConfig.LastMonth
+                Result .= '\' LastMonth.Year '-' LastMonth.Month '-report.csv'
+            }
+            if FileExist(Result) {
+                if MsgBox('A file already exists at ' Result '. Is it OK to overwrite?', 'File exists', 'YN') == 'No' {
+                    Ctrl.Edit.Text := ''
+                } else {
+                    Ctrl.Edit.Text := Result
+                }
+            }
         }
     }
 

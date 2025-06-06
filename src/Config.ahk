@@ -19,9 +19,7 @@ class ContactsConfig {
     static PathInGroups[Date := this.__Date] => Format('{}\{}-groups.csv', this.In, Date)
     static PathInVoicemails[Date := this.__Date] => Format('{}\{}-voicemails.csv', this.In, Date)
     static PathInPracticeMeetIng[Date := this.__Date] => Format('{}\{}-practice.csv', this.In, Date)
-    static PathInAttendance[Date := this.__Date] => Format('{}\{}-attendance-cleaned.csv', this.In, Date)
     static PathInGlpi[Date := this.__Date] => Format('{}\{}-glpi.csv', this.In, Date)
-    static PathInGlpi_Cleaned[Date := this.__Date] => Format('{}\{}-glpi-cleaned.csv', this.In, Date)
 
     static  CallFrom := ['1060', '1063']
     , DID := '6027614950'
