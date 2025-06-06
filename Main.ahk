@@ -299,8 +299,6 @@ class Main {
             '`nUnanswered 15 minutes before groups,' Results.WithinFifteen_Unanswered_Before.Length
             '`nUnanswered 15 minutes after groups,' Results.WithinFifteen_Unanswered_After.Length
             '`nTotal unanswered not within 15 minutes of groups,' Results.NotWithinFifteen_Unanswered.Length
-            '`nTotal outbound calls,'
-            '`n'
             '`n'
             _GetCategories()
         )
