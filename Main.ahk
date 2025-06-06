@@ -55,7 +55,7 @@ class Main {
             Align.CenterV(Btns[A_Index], Edits[A_Index])
         }
         Txts.Push(G.Add('Text', Format('x{} y{} w{} Right Section vTxtPathOut', cx, Y + G.MarginY * 2, W), 'Save to:'))
-        Edits.Push(G.Add('Edit', 'w400 r2 ys -VScroll vEditPathOut', A_ScriptDir '\' ContactsConfig.PathOut))
+        Edits.Push(G.Add('Edit', 'w400 r2 ys -VScroll vEditPathOut', A_ScriptDir '\2025-05-output.csv'))
         Btns.Push(G.Add('Button', 'ys vBtnPathOut', 'Select'))
         Align.CenterV(Txts[-1], Edits[-1])
         Align.CenterV(Btns[-1], Edits[-1])
@@ -134,14 +134,14 @@ class Main {
             }
         }
         HClickButtonSelectPathOut(Ctrl, *) {
-            Initial := Ctrl.Edit.Text ? SubStr(Ctrl.Edit.Text, 1, RegExMatch(Ctrl.Edit.Text, '[\\/][^/\\]+$') - 1) : unset
-            Result := FileSelect('S18', Initial ?? unset, 'Select file')
+            Initial := Ctrl.Edit.Text
+            Result := FileSelect('S2', Initial ?? unset, 'Select file', '*.csv')
             if !Result {
                 return
             }
             if DirExist(Result) {
                 LastMonth := ContactsConfig.LastMonth
-                Result .= '\' LastMonth.Year '-' LastMonth.Month '-report.csv'
+                Result .= '\' LastMonth.Year '-' LastMonth.Month '-output.csv'
             }
             if FileExist(Result) {
                 if MsgBox('A file already exists at ' Result '. Is it OK to overwrite?', 'File exists', 'YN') == 'No' {
