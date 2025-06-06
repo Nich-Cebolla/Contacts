@@ -3,7 +3,7 @@ class IGlpi {
     static Parse() {
         ParseCsvConfig.Set('Glpi')
         ParseCsvConfig.Constructor := ObjBindMethod(this.Notes, 'Add')
-        ParseCsv()
+        ParseCsv(, Main.Content.Glpi)
     }
 
     class Notes extends MapExClass {

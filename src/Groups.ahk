@@ -5,7 +5,7 @@ class IGroups {
     static Parse() {
         ParseCsvConfig.Set('Groups')
         ParseCsvConfig.Constructor := _Constructor
-        ParseCsv()
+        ParseCsv(, Main.Content.Groups)
 
         _Constructor(Fields, *) {
             this.Groups.AddToList(Group := this.Group(Fields))
@@ -53,7 +53,12 @@ class IGroups {
             t := StrSplit(Fields[7], ':', '`s`t')
             this.__StartTime := DateObj.FromTimestamp(SubStr(ContactsConfig.LastMonth.Timestamp, 1, 8) Format('{:02}', t[1]) Format('{:2}', t[2]) '00')
             this.Location := Fields[8]
-            this.DayCodes := StrSplit(this.Day, ';', '`s`t')
+            this.DayCodes := []
+            for dc in IGroups.DayCodes {
+                if InStr(this.Day, dc) {
+                    this.DayCodes.Push(dc)
+                }
+            }
         }
 
         DaySeconds => this.__StartTime.DaySeconds

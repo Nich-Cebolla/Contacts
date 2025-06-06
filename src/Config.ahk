@@ -5,8 +5,7 @@ class ContactsConfig {
     static CommaReplacement := Chr(0xFCCC) '1' Chr(0xFCCC)
     static SetDate() {
         this.Today := DateObj.FromTimestamp(A_Now)
-        this.LastMonth := DateObj.FromTimestamp(A_Now)
-        this.LastMonth.Adjust(this.Today.Day * -1 - 1, 'D')
+        this.LastMonth := DateObj.FromTimestamp(A_Now).AddToNew(this.Today.Day * -1 - 1, 'D')
         this.LastMonth.Day := '01'
         this.LastMonth.Hour := this.LastMonth.Minute := this.LastMonth.Second := '00'
     }
@@ -34,26 +33,29 @@ class ContactsConfig {
     , OptFont := {Size: 11, Family: 'Consolas', Color: 'Black', Opt: ''}
     , OptSection := { InitialX: 10, InitialY: 10 }
     , ListViewParams := Map()
+
+    static ErrorGui := {
+        Width: 800
+      , BtnWidth: 80
+      , FontName: 'Mono,Arial Rounded MT,Roboto Mono,Ubuntu Mono,IBM Plex Mono'
+      , FontOpt: 's11 q5'
+      , EdtRows: 8
+      , ThreadDpiAwarenessContext: -3
+    }
 }
+
+class Strings {
+    class ErrorGui {
+        static TxtMain := 'There was a problem opening "{1}".`r`nTo select a new file click "Select".'
+    }
+}
+
 
 class ParseCSVConfig {
     static Set(Name) {
         switch Name, 0 {
-            case 'Voicemails':
+            case 'Voicemails', 'Calls', 'Groups', 'Attendance', 'Glpi':
                 this.QuoteChar := '"'
-                this.RecordDelimiter := '`n'
-            case 'Glpi':
-                this.QuoteChar := ''
-                this.RecordDelimiter := '`r`n'
-
-                ; if FileExist(ContactsConfig.PathInGlpi_Cleaned) {
-                ;     this.PathIn := ContactsConfig.PathInGlpi_Cleaned
-                ;     IGlpi.Cleaned := true
-                ;     return
-                ; }
-            case 'Calls', 'Groups', 'Attendance':
-                this.QuoteChar := ''
-                this.RecordDelimiter := '`r`n'
         }
         this.PathIn := ContactsConfig.PathIn%Name%
     }
@@ -70,6 +72,9 @@ class ParseCSVConfig {
     static RecordDelimiter := '`n'
     static Start := true
 }
+
+/*
+Not in use
 
 class Tables {
     static ByQueue := [

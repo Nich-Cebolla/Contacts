@@ -16,9 +16,12 @@
 #Include Array_FindAll.ahk
 #Include Array_IndexOf.ahk
 #Include ArrayClass.ahk
-#Include DateObj_V1.0.1.ahk
+#Include DateObj.ahk
 #Include FillStr.ahk
 #Include MapEx_V1.0.0.ahk
 #Include MapExClass_V1.0.0.ahk
-#Include ParseCsv_V1.0.2.ahk
+#Include ParseCsv.ahk
 #Include ControlTextExtent.ahk
+#include StackTraceReader.ahk
+#include ItemScroller.ahk
+#include GuiResizer.ahk

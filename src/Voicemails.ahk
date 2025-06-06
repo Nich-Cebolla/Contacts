@@ -10,7 +10,7 @@ class IVoicemails {
     static Parse() {
         ParseCsvConfig.Set('Voicemails')
         ParseCsvConfig.Constructor := ObjBindMethod(this.Voicemails, 'Add')
-        ParseCsv()
+        ParseCsv(, Main.Content.Voicemails)
     }
 
     class Voicemails extends ArrayClass {

@@ -4,7 +4,7 @@ class IContacts {
     static Parse() {
         ParseCsvConfig.Set('Calls')
         ParseCsvConfig.Constructor := _Constructor
-        ParseCsv()
+        ParseCsv(, Main.Content.Calls)
 
         _Constructor(Fields, Parser) {
             this.Contacts.Add(Contact := this.Contact(Fields, Parser))
@@ -13,7 +13,7 @@ class IContacts {
     }
 
     class Contacts extends ArrayClass {
-        __New() {
+        static __New() {
             if this.Prototype.__Class == 'IContacts.Contacts' {
                 this.__Item := []
             }

@@ -9,11 +9,11 @@ class Main {
     static __New() {
         if this.Prototype.__Class == 'Main' {
             this.Parsers := {
-                CallDate: DateObj.Parser('yyyy-MM-dd\``s+H:m:s', '')
-              , Duration: DateObj.Parser('H:m:s')
-              , Voicemail: DateObj.Parser('MMMM\``s+d\``s+yyyy\``s+a``t\``s+h:m:s\``s+tt', '')
-              , Glpi: DateObj.Parser('M/d/yyyy\``s+H:m', '')
-              , Attendance: DateObj.Parser('M/d/yyyy\``s+H:m', '')
+                CallDate: DateParser('\t{yyyy-MM-dd}\s+\t{H:m:s}')
+              , Duration: DateParser('H:m:s')
+              , Voicemail: DateParser('\t{MMMM}\s+\t{d}\s+\t{yyyy}\s+at\s+\t{h:m:s}\s+\t{tt}', 'i)')
+              , Glpi: DateParser('\t{M/d/yyyy}\s+\t{H:m}')
+              , Attendance: DateParser('\t{M/d/yyyy}\s+\t{H:m}')
             }
         }
     }
@@ -49,7 +49,8 @@ class Main {
             Btns.Push(G.Add('Button', 'ys vBtn' Prop, 'Select'))
             Btns[-1].Edit := Edits[-1]
             Btns[-1].Prop := Prop
-            Btns[-1].OnEvent('Click', HClickButtonGeneral)
+            Btns[-1].ContentName := Name
+            Btns[-1].OnEvent('Click', HClickButtonSelect)
             Align.CenterV(Txts[A_Index], Edits[A_Index])
             Align.CenterV(Btns[A_Index], Edits[A_Index])
         }
@@ -74,13 +75,10 @@ class Main {
 
         G.Show()
 
-        HClickButtonGeneral(Ctrl, *) {
-            SplitPath(Ctrl.Edit.Text, , &Dir)
-            Result := FileSelect('3', Dir || unset, 'Select file')
-            if !Result {
-                return
+        HClickButtonSelect(Ctrl, *) {
+            if !this.SelectFile(Ctrl, &Path) {
+                Ctrl.Edit.Text := Path
             }
-            Ctrl.Edit.Text := Result
         }
         HClickButtonOpenOutput(Ctrl, *) {
             if InStr(Ctrl.Name, 'Dir') {
@@ -97,7 +95,7 @@ class Main {
         HClickButtonRun(Ctrl, *) {
             static flag_addtext := true, flag_dots
             flag_dots := true
-            for Btn in Btns {
+            for Btn in this.Btns {
                 ContactsConfig.DefineProp(Btn.Prop, { Value: Btn.Edit.Text })
             }
             Ctrl.Gui['TxtStatus'].Text := 'Status: Processing'
@@ -106,13 +104,17 @@ class Main {
                 Ctrl.Gui.Add('Text', Format('x{} y{} w50 vTxtDots', cx + cw, cy), '.')
                 flag_addtext := false
             }
-            dots := 0
-            SetTimer(_Dots, 500)
-            this.Run()
+            ; dots := 0
+            ; SetTimer(_Dots, 500)
+            result := this.Run()
             flag_dots := false
-            SetTimer(_Dots, 0)
+            ; SetTimer(_Dots, 0)
             Ctrl.Gui['TxtDots'].Text := ''
-            Ctrl.Gui['TxtStatus'].Text := 'Status: Complete'
+            if result {
+                Ctrl.Gui['TxtStatus'].Text := 'Status: Error'
+            } else {
+                Ctrl.Gui['TxtStatus'].Text := 'Status: Complete'
+            }
 
             _Dots(*) {
                 if flag_dots {
@@ -141,7 +143,135 @@ class Main {
         }
     }
 
+    static CleanupFiles() {
+        Content := this.Content := {}
+        for btn in this.Btns {
+            if InStr(btn.Prop, 'PathOut') {
+                continue
+            }
+            try {
+                Content.DefineProp(btn.ContentName, { Value: RegExReplace(FileRead(btn.Edit.Text), '\R', '`n') })
+            } catch Error as err {
+                problem := err
+                problem.Btn := btn
+                break
+            }
+        }
+        if IsSet(problem) {
+            this.DisplayErrorGui(problem)
+            return 1
+        }
+        Content.Glpi := RegExReplace(Content.Glpi, ',(?=\n|$)', '')
+        Content.Voicemails := RegExReplace(Content.Voicemails, ',(?=\n|$)', '')
+    }
+
+    static DisplayErrorGui(problem) {
+        _str := Strings.ErrorGui
+        Config := ContactsConfig.ErrorGui
+        if !this.HasOwnProp('EG') {
+            ThreadDpiAwarenessContext := DllCall('GetThreadDpiAwarenessContext', 'ptr')
+            if Config.ThreadDpiAwarenessContext {
+                this.SetThreadDpiAwarenessContext(Config.ThreadDpiAwarenessContext)
+            }
+            EG := this.EG := Gui('+Resize -DPIScale')
+            EG.SetFont(Config.FontOpt)
+            EG.Add('Text', 'w' Config.Width ' Section vTxtMain', Format(_str.TxtMain, problem.Btn.Edit.Text))
+            EG.Add('Button', 'w' Config.BtnWidth ' xs Section vBtnExit', 'Exit').OnEvent('Click', HClickButtonExit)
+            EG.Add('Button', 'w' Config.BtnWidth ' ys vBtnViewError', 'View Error').OnEvent('Click', HClickButtonViewError)
+            EG.Add('Button', 'w' Config.BtnWidth ' ys vBtnSelect', 'Select').OnEvent('Click', HClickButtonSelect)
+        }
+        EG := this.EG
+        EG.Problem := problem
+        this.G.GetPos(&gx, &gy)
+        EG.Show('x' gx ' y' gy)
+        if Config.ThreadDpiAwarenessContext {
+            this.SetThreadDpiAwarenessContext(ThreadDpiAwarenessContext)
+        }
+
+        HClickButtonExit(*) {
+            ExitApp()
+        }
+        HClickButtonViewError(*) {
+            Config := ContactsConfig.ErrorGui
+            EG := this.EG
+            problem := EG.Problem
+            StackTraceResult := this.StackTraceResult := StackTraceReader.FromError(problem, 5, 5)
+            Width := ContactsConfig.ErrorGui.Width - EG.MarginX * 2
+            Obj := StackTraceResult[1]
+            for s in StrSplit(Config.FontName, ',') {
+                if s {
+                    EG.SetFont(, s)
+                }
+            }
+            EG.SetFont(Config.FontOpt)
+            EG.Add('Edit', 'w' Width ' r' Config.EdtRows ' xs Section +HScroll -Wrap vEdtError', this.ReadError(problem)).Resizer := { H: 0.5, W: 1 }
+            EG.Add('Edit', 'w' Width ' r' Config.EdtRows ' xs Section +HScroll -Wrap vEdtStack', _ReadResult(1)).Resizer := { Y: 0.5, H: 0.5, W: 1 }
+            EG['EdtStack'].GetPos(&edtx, &edty, &edtw, &edth)
+            this.ItemScroller := ItemScroller(EG, { StartX: edtx, StartY: edty + edth + EG.MarginY, Array: StackTraceResult, Callback: _ItemScroller })
+            this.ItemScroller.CtrlBtnNext.GetPos(&btnx, &btny, &btnw, &btnh)
+            this.ItemScroller.CtrlBtnback.Resizer := { Y: 1 }
+            this.ItemScroller.CtrlEdit.Resizer := { Y: 1 }
+            this.ItemScroller.CtrlTxtOf.Resizer := { Y: 1 }
+            this.ItemScroller.CtrlTxtTotal.Resizer := { Y: 1 }
+            this.ItemScroller.CtrlBtnJump.Resizer := { Y: 1 }
+            this.ItemScroller.CtrlBtnNext.Resizer := { Y: 1 }
+            EG.Show(Format('w{} h{}', edtx + edtw + EG.MarginX, btny + btnh + EG.MarginY))
+            EG.Resizer := GuiResizer(EG, 50)
+
+            sleep 1
+
+        }
+        HClickButtonSelect(*) {
+            EG := this.EG
+            this.SelectFile(this.EG.Problem.Btn, &Path)
+            this.EG.Problem.Btn.Edit.Text := Path
+            EG.Hide()
+        }
+        _ItemScroller(Index, Scroller) {
+            EG := this.EG
+            EG['EdtStack'].Text := _ReadResult(Index)
+        }
+        _ReadResult(Index) {
+            Obj := this.StackTraceResult[Index]
+            return RegExReplace('File: ' Obj.Path '`n' 'Line: ' Obj.Line '`nSnippet:`n' Obj.Value, '\R', '`r`n')
+        }
+
+    }
+
+    static SelectFile(Ctrl, &Path) {
+        if this.G.HasOwnProp('SelectedDirectory') {
+            Dir := this.G.SelectedDirectory
+        } else {
+            if Ctrl.HasOwnProp('Edit') {
+                SplitPath(Ctrl.Edit.Text, , &Dir)
+            } else {
+                Dir := A_ScriptDir
+            }
+        }
+        Result := FileSelect('3', Dir || unset, 'Select file')
+        if !Result {
+            return 1
+        }
+        SplitPath(Result, , &Dir)
+        this.G.SelectedDirectory := Dir
+        Path := Result
+    }
+
+    static ReadError(err) {
+        return (
+            'Message: ' err.message
+            '`r`nWhat: ' err.What
+            '`r`nFile: ' err.File
+            '`r`nLine: ' err.Line
+            '`r`nExtra: ' err.Extra
+            '`r`nStack:`r`n' err.Stack
+        )
+    }
+
     static Run() {
+        if this.CleanupFiles() {
+            return 1
+        }
         IGroups.Parse()
         IContacts.Parse()
         IVoicemails.Parse()
@@ -189,4 +319,11 @@ class Main {
             return Str
         }
     }
+
+    static SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT) {
+        if DllCall('IsValidDpiAwarenessContext', 'ptr', DPI_AWARENESS_CONTEXT, 'uint') {
+            return DllCall('SetThreadDpiAwarenessContext', 'ptr', DPI_AWARENESS_CONTEXT, 'ptr')
+        }
+    }
+
 }
