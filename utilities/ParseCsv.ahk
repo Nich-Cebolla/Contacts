@@ -78,12 +78,12 @@ class ParseCsv {
      * If using a `BreakpointAction` callback, you can direct `ParseCsv` to return by returning a
      * nonzero value.
      * @example
-        MyCallback(instance) {
-            loop instance.Params.Breakpoint {
-                if RegExMatch(instance.Collection[-1 * A_Index].Some_Header, SomePattern)
-                    return 1 ; I've found what I needed, so now I direct `ParseCsv` to return.
-            }
-        }
+     *  MyCallback(instance) {
+     *      loop instance.Params.Breakpoint {
+     *          if RegExMatch(instance.Collection[-1 * A_Index].Some_Header, SomePattern)
+     *              return 1 ; I've found what I needed, so now I direct `ParseCsv` to return.
+     *      }
+     *  }
      * @
      * @property {Integer} [CollectionArrayBuffer=1000] - When set, and when the current number of
      * records exceeds the length of the array, `ParseCsv` will add this number to the array's
